@@ -3,10 +3,10 @@
 #include <math.h>
 #include <string.h>
 
-// Define the structure for user data
 typedef struct {
-    double latitude, longitude, altitude, time;
+    double latitude, longitude, altitude;
     char name[50];
+    char time[6]; // To store time in HH:MM format
 } user_t;
 
 // Function to scan user data
@@ -46,9 +46,23 @@ void read_users_from_file(const char* file_path, user_t *users, int num_users) {
         exit(1);
     }
 
+    char line[100];
+    // Skip the first line which contains the number of users
+    if (fgets(line, sizeof(line), file) == NULL) {
+        printf("Error reading the number of users from file.\n");
+        fclose(file);
+        exit(1);
+    }
+
     for (int i = 0; i < num_users; ++i) {
-        if (fscanf(file, "%s %lf %lf %lf %lf", users[i].name, &users[i].latitude, &users[i].longitude, &users[i].altitude, &users[i].time) != 5) {
-            printf("Error reading user data from file.\n");
+        if (fgets(line, sizeof(line), file) == NULL) {
+            printf("Error reading user data from file at line %d.\n", i + 2); // Lines are 1-indexed and +1 for the skipped line
+            fclose(file);
+            exit(1);
+        }
+        // Using sscanf to parse the line
+        if (sscanf(line, "%49s %lf %lf %lf %5s", users[i].name, &users[i].latitude, &users[i].longitude, &users[i].altitude, users[i].time) != 5) {
+            printf("Error: Incorrect format at line %d.\n", i + 2);
             fclose(file);
             exit(1);
         }
